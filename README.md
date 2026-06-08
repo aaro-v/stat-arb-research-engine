@@ -36,6 +36,20 @@ Run the daily maintenance check:
 python scripts/daily_research_check.py
 ```
 
+Generate the deterministic sample report artifacts:
+
+```bash
+python scripts/generate_sample_report.py
+```
+
+## Sample Results
+
+The chart below is generated from a deterministic synthetic mean-reverting
+spread. It is included because it exercises real project logic: threshold
+classification, position state, transaction-cost-aware PnL, and reporting.
+
+![Mean-reversion diagnostic](reports/generated/mean_reversion_diagnostic.png)
+
 ## Project Layout
 
 ```text

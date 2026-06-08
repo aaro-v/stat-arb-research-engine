@@ -1,3 +1,3 @@
-from .thresholds import ThresholdSignal, classify_zscore
+from .thresholds import ThresholdPolicy, ThresholdSignal, classify_zscore
 
-__all__ = ["ThresholdSignal", "classify_zscore"]
+__all__ = ["ThresholdPolicy", "ThresholdSignal", "classify_zscore"]
