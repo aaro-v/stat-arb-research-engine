@@ -50,6 +50,11 @@ classification, position state, transaction-cost-aware PnL, and reporting.
 
 ![Mean-reversion diagnostic](reports/generated/mean_reversion_diagnostic.png)
 
+The paired `reports/generated/mean_reversion_summary.csv` file records the
+same deterministic engineering validation run with path diagnostics including
+PnL, Sharpe, drawdown, trade count, hit rate, profit factor, turnover, and
+average holding period.
+
 ## Project Layout
 
 ```text

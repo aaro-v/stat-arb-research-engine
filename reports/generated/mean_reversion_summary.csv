@@ -1,0 +1,2 @@
+dataset,total_pnl,sharpe,max_drawdown,trades,hit_rate,profit_factor,turnover,average_holding_period
+deterministic_synthetic_engineering_validation,-11.901565255713393,-1.3191504561019358,-12.857903217170305,16,0.4344262295081967,0.6809284062633274,16.0,14.25

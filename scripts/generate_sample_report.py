@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from stat_arb_engine.backtesting import summarize_pnl
 from stat_arb_engine.reporting.charts import plot_mean_reversion_diagnostic
 from stat_arb_engine.signals import ThresholdPolicy, ThresholdSignal, classify_zscore
 
@@ -51,8 +52,25 @@ def build_sample_diagnostic(days: int = 320, seed: int = 17) -> pd.DataFrame:
 def main() -> None:
     output_dir = Path("reports/generated")
     frame = build_sample_diagnostic()
+    summary = summarize_pnl(frame["pnl"].to_numpy(), positions=frame["position"].to_numpy())
+    summary_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "total_pnl": summary.total_return,
+                "sharpe": summary.sharpe,
+                "max_drawdown": summary.max_drawdown,
+                "trades": summary.trades,
+                "hit_rate": summary.hit_rate,
+                "profit_factor": summary.profit_factor,
+                "turnover": summary.turnover,
+                "average_holding_period": summary.average_holding_period,
+            }
+        ]
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
+    summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,
         output_dir / "mean_reversion_diagnostic.png",
