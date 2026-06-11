@@ -3,7 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from stat_arb_engine.backtesting import rolling_splits, summarize_pnl
+from stat_arb_engine.backtesting import (
+    WalkForwardSplit,
+    aggregate_walk_forward_diagnostics,
+    rolling_splits,
+    summarize_pnl,
+    summarize_walk_forward_pnl,
+)
 from stat_arb_engine.execution import CostModel, estimate_round_trip_cost
 from stat_arb_engine.signals import ThresholdSignal, classify_zscore
 
@@ -51,3 +57,35 @@ def test_walk_forward_splits() -> None:
     splits = rolling_splits(length=100, train_size=40, test_size=10)
     assert splits[0].train_start == 0
     assert splits[-1].test_end <= 100
+
+
+def test_walk_forward_splits_validate_step() -> None:
+    with pytest.raises(ValueError, match="step"):
+        rolling_splits(length=100, train_size=40, test_size=10, step=0)
+
+
+def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
+    pnl = np.array([0.50, 0.40, 0.03, 0.02, 0.30, 0.25, -0.01, 0.04])
+    positions = np.array([0.0, 1.0, 1.0, 0.0, 0.0, -1.0, -1.0, 0.0])
+    splits = [
+        WalkForwardSplit(train_start=0, train_end=2, test_start=2, test_end=4),
+        WalkForwardSplit(train_start=4, train_end=6, test_start=6, test_end=8),
+    ]
+
+    folds = summarize_walk_forward_pnl(pnl, splits, positions=positions)
+    diagnostics = aggregate_walk_forward_diagnostics(folds)
+
+    assert [fold.fold for fold in folds] == [0, 1]
+    assert [fold.summary.total_return for fold in folds] == [0.05, 0.03]
+    assert folds[0].summary.turnover == 2.0
+    assert diagnostics.folds == 2
+    assert diagnostics.total_return == pytest.approx(0.08)
+    assert diagnostics.positive_fold_rate == 1.0
+
+
+def test_summarize_walk_forward_pnl_validates_split_bounds() -> None:
+    with pytest.raises(ValueError, match="invalid walk-forward split"):
+        summarize_walk_forward_pnl(
+            np.array([0.01, -0.01]),
+            [WalkForwardSplit(train_start=0, train_end=1, test_start=1, test_end=3)],
+        )
