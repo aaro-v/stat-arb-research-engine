@@ -20,6 +20,21 @@ def test_summarize_pnl() -> None:
     assert summary.trades >= 1
     assert summary.hit_rate == 2 / 3
     assert summary.profit_factor == 6.0
+    assert summary.annualized_volatility > 0.0
+    assert summary.downside_deviation > 0.0
+    assert summary.sortino > 0.0
+    assert summary.tail_loss_95 > 0.0
+    assert summary.expected_shortfall_95 > 0.0
+
+
+def test_summarize_pnl_reports_zero_tail_risk_without_losses() -> None:
+    summary = summarize_pnl(np.array([0.0, 0.01, 0.02]))
+
+    assert summary.profit_factor == float("inf")
+    assert summary.downside_deviation == 0.0
+    assert summary.sortino == 0.0
+    assert summary.tail_loss_95 == 0.0
+    assert summary.expected_shortfall_95 == 0.0
 
 
 def test_summarize_pnl_with_position_path_diagnostics() -> None:

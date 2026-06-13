@@ -65,6 +65,11 @@ def main() -> None:
                 "profit_factor": summary.profit_factor,
                 "turnover": summary.turnover,
                 "average_holding_period": summary.average_holding_period,
+                "annualized_volatility": summary.annualized_volatility,
+                "downside_deviation": summary.downside_deviation,
+                "sortino": summary.sortino,
+                "tail_loss_95": summary.tail_loss_95,
+                "expected_shortfall_95": summary.expected_shortfall_95,
             }
         ]
     )

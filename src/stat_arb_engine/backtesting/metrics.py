@@ -15,6 +15,11 @@ class BacktestSummary:
     profit_factor: float = 0.0
     turnover: float = 0.0
     average_holding_period: float = 0.0
+    annualized_volatility: float = 0.0
+    downside_deviation: float = 0.0
+    sortino: float = 0.0
+    tail_loss_95: float = 0.0
+    expected_shortfall_95: float = 0.0
 
 
 def summarize_pnl(
@@ -40,6 +45,13 @@ def summarize_pnl(
     drawdowns = equity - np.maximum.accumulate(equity)
     volatility = np.std(values, ddof=1) if values.size > 1 else 0.0
     sharpe = 0.0 if volatility == 0 else float(np.mean(values) / volatility * np.sqrt(periods_per_year))
+    downside_deviation = _downside_deviation(values)
+    sortino = (
+        0.0
+        if downside_deviation == 0.0
+        else float(np.mean(values) / downside_deviation * np.sqrt(periods_per_year))
+    )
+    tail_loss_95, expected_shortfall_95 = _tail_loss(values, confidence=0.95)
     gains = values[values > 0.0].sum(initial=0.0)
     losses = values[values < 0.0].sum(initial=0.0)
     active_periods = np.count_nonzero(values)
@@ -60,6 +72,11 @@ def summarize_pnl(
         profit_factor=float("inf") if losses == 0.0 and gains > 0.0 else _safe_profit_factor(gains, losses),
         turnover=turnover,
         average_holding_period=average_holding_period,
+        annualized_volatility=float(volatility * np.sqrt(periods_per_year)),
+        downside_deviation=downside_deviation,
+        sortino=sortino,
+        tail_loss_95=tail_loss_95,
+        expected_shortfall_95=expected_shortfall_95,
     )
 
 
@@ -71,6 +88,21 @@ def _safe_profit_factor(gains: float, losses: float) -> float:
     if losses == 0.0:
         return 0.0
     return float(gains / abs(losses))
+
+
+def _downside_deviation(values: np.ndarray) -> float:
+    downside = np.minimum(values, 0.0)
+    if not np.any(downside):
+        return 0.0
+    return float(np.sqrt(np.mean(np.square(downside))))
+
+
+def _tail_loss(values: np.ndarray, confidence: float) -> tuple[float, float]:
+    quantile = np.quantile(values, 1.0 - confidence)
+    tail = values[values <= quantile]
+    tail_loss = max(0.0, -float(quantile))
+    expected_shortfall = 0.0 if tail.size == 0 else max(0.0, -float(np.mean(tail)))
+    return tail_loss, expected_shortfall
 
 
 def _average_holding_period(positions: np.ndarray) -> float:
