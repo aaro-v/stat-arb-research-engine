@@ -6,6 +6,7 @@ import pytest
 from stat_arb_engine.backtesting import (
     WalkForwardSplit,
     aggregate_walk_forward_diagnostics,
+    block_bootstrap_stress,
     rolling_splits,
     summarize_pnl,
     summarize_walk_forward_pnl,
@@ -104,3 +105,29 @@ def test_summarize_walk_forward_pnl_validates_split_bounds() -> None:
             np.array([0.01, -0.01]),
             [WalkForwardSplit(train_start=0, train_end=1, test_start=1, test_end=3)],
         )
+
+
+def test_block_bootstrap_stress_is_deterministic_with_seed() -> None:
+    pnl = np.array([0.01, -0.02, 0.015, 0.005, -0.01, 0.02])
+
+    first = block_bootstrap_stress(pnl, simulations=200, horizon=12, block_size=3, seed=7)
+    second = block_bootstrap_stress(pnl, simulations=200, horizon=12, block_size=3, seed=7)
+
+    assert first == second
+    assert first.simulations == 200
+    assert first.horizon == 12
+    assert first.block_size == 3
+    assert 0.0 <= first.loss_probability <= 1.0
+    assert first.total_return_p05 <= first.median_total_return <= first.total_return_p95
+    assert first.max_drawdown_p05 <= 0.0
+
+
+def test_block_bootstrap_stress_validates_inputs() -> None:
+    with pytest.raises(ValueError, match="non-empty"):
+        block_bootstrap_stress(np.array([]))
+    with pytest.raises(ValueError, match="simulations"):
+        block_bootstrap_stress(np.array([0.01]), simulations=0)
+    with pytest.raises(ValueError, match="horizon"):
+        block_bootstrap_stress(np.array([0.01]), horizon=0)
+    with pytest.raises(ValueError, match="block_size"):
+        block_bootstrap_stress(np.array([0.01]), block_size=0)
