@@ -60,6 +60,7 @@ def main() -> None:
                 "total_pnl": summary.total_return,
                 "sharpe": summary.sharpe,
                 "max_drawdown": summary.max_drawdown,
+                "max_drawdown_duration": summary.max_drawdown_duration,
                 "trades": summary.trades,
                 "hit_rate": summary.hit_rate,
                 "profit_factor": summary.profit_factor,
@@ -70,6 +71,7 @@ def main() -> None:
                 "sortino": summary.sortino,
                 "tail_loss_95": summary.tail_loss_95,
                 "expected_shortfall_95": summary.expected_shortfall_95,
+                "time_under_water": summary.time_under_water,
             }
         ]
     )

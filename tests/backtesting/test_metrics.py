@@ -18,6 +18,8 @@ from stat_arb_engine.signals import ThresholdSignal, classify_zscore
 def test_summarize_pnl() -> None:
     summary = summarize_pnl(np.array([0.01, -0.005, 0.02]))
     assert summary.total_return == 0.025
+    assert summary.max_drawdown_duration == 1
+    assert summary.time_under_water == 1
     assert summary.trades >= 1
     assert summary.hit_rate == 2 / 3
     assert summary.profit_factor == 6.0
@@ -31,6 +33,8 @@ def test_summarize_pnl() -> None:
 def test_summarize_pnl_reports_zero_tail_risk_without_losses() -> None:
     summary = summarize_pnl(np.array([0.0, 0.01, 0.02]))
 
+    assert summary.max_drawdown_duration == 0
+    assert summary.time_under_water == 0
     assert summary.profit_factor == float("inf")
     assert summary.downside_deviation == 0.0
     assert summary.sortino == 0.0
@@ -48,6 +52,14 @@ def test_summarize_pnl_with_position_path_diagnostics() -> None:
     assert summary.turnover == 4.0
     assert summary.average_holding_period == 1.5
     assert summary.hit_rate == 0.5
+
+
+def test_summarize_pnl_reports_drawdown_duration() -> None:
+    summary = summarize_pnl(np.array([0.04, -0.01, -0.01, 0.005, 0.02, -0.005]))
+
+    assert summary.max_drawdown == pytest.approx(-0.02)
+    assert summary.max_drawdown_duration == 3
+    assert summary.time_under_water == 4
 
 
 def test_summarize_pnl_validates_position_shape() -> None:

@@ -9,6 +9,7 @@ import numpy as np
 class BacktestSummary:
     sharpe: float
     max_drawdown: float
+    max_drawdown_duration: int
     total_return: float
     trades: int
     hit_rate: float = 0.0
@@ -20,6 +21,7 @@ class BacktestSummary:
     sortino: float = 0.0
     tail_loss_95: float = 0.0
     expected_shortfall_95: float = 0.0
+    time_under_water: int = 0
 
 
 def summarize_pnl(
@@ -43,6 +45,7 @@ def summarize_pnl(
 
     equity = np.cumsum(values)
     drawdowns = equity - np.maximum.accumulate(equity)
+    max_drawdown_duration, time_under_water = _drawdown_duration(drawdowns)
     volatility = np.std(values, ddof=1) if values.size > 1 else 0.0
     sharpe = 0.0 if volatility == 0 else float(np.mean(values) / volatility * np.sqrt(periods_per_year))
     downside_deviation = _downside_deviation(values)
@@ -66,6 +69,7 @@ def summarize_pnl(
     return BacktestSummary(
         sharpe=sharpe,
         max_drawdown=float(drawdowns.min(initial=0.0)),
+        max_drawdown_duration=max_drawdown_duration,
         total_return=float(equity[-1]),
         trades=trades,
         hit_rate=0.0 if active_periods == 0 else float(np.count_nonzero(values > 0.0) / active_periods),
@@ -77,6 +81,7 @@ def summarize_pnl(
         sortino=sortino,
         tail_loss_95=tail_loss_95,
         expected_shortfall_95=expected_shortfall_95,
+        time_under_water=time_under_water,
     )
 
 
@@ -103,6 +108,20 @@ def _tail_loss(values: np.ndarray, confidence: float) -> tuple[float, float]:
     tail_loss = max(0.0, -float(quantile))
     expected_shortfall = 0.0 if tail.size == 0 else max(0.0, -float(np.mean(tail)))
     return tail_loss, expected_shortfall
+
+
+def _drawdown_duration(drawdowns: np.ndarray) -> tuple[int, int]:
+    max_duration = 0
+    current_duration = 0
+    time_under_water = 0
+    for drawdown in drawdowns:
+        if drawdown < 0.0:
+            current_duration += 1
+            time_under_water += 1
+            max_duration = max(max_duration, current_duration)
+        else:
+            current_duration = 0
+    return max_duration, time_under_water
 
 
 def _average_holding_period(positions: np.ndarray) -> float:
