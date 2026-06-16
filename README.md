@@ -12,6 +12,7 @@ The project is organized around a production research workflow: market data norm
 - Convex portfolio construction with leverage, beta-neutrality, and turnover constraints.
 - Entry and exit threshold objects for mean-reversion signals.
 - Backtests with transaction costs, borrow costs, slippage, walk-forward validation, and bootstrap stress tests.
+- Exposure diagnostics for net/gross leverage, beta, long/short books, and gross concentration.
 
 ## Design Principles
 
