@@ -5,7 +5,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from stat_arb_engine.backtesting import summarize_pnl
+from stat_arb_engine.backtesting import (
+    aggregate_walk_forward_diagnostics,
+    rolling_splits,
+    summarize_pnl,
+    summarize_walk_forward_pnl,
+)
 from stat_arb_engine.reporting.charts import plot_mean_reversion_diagnostic
 from stat_arb_engine.signals import ThresholdPolicy, ThresholdSignal, classify_zscore
 
@@ -53,6 +58,13 @@ def main() -> None:
     output_dir = Path("reports/generated")
     frame = build_sample_diagnostic()
     summary = summarize_pnl(frame["pnl"].to_numpy(), positions=frame["position"].to_numpy())
+    splits = rolling_splits(length=len(frame), train_size=126, test_size=42, step=42)
+    folds = summarize_walk_forward_pnl(
+        frame["pnl"].to_numpy(),
+        splits,
+        positions=frame["position"].to_numpy(),
+    )
+    walk_forward = aggregate_walk_forward_diagnostics(folds)
     summary_frame = pd.DataFrame(
         [
             {
@@ -72,12 +84,46 @@ def main() -> None:
                 "tail_loss_95": summary.tail_loss_95,
                 "expected_shortfall_95": summary.expected_shortfall_95,
                 "time_under_water": summary.time_under_water,
+                "walk_forward_folds": walk_forward.folds,
+                "walk_forward_mean_sharpe": walk_forward.mean_sharpe,
+                "walk_forward_median_sharpe": walk_forward.median_sharpe,
+                "walk_forward_sharpe_std": walk_forward.sharpe_std,
+                "walk_forward_total_return": walk_forward.total_return,
+                "walk_forward_mean_return": walk_forward.mean_return,
+                "walk_forward_return_std": walk_forward.return_std,
+                "walk_forward_positive_fold_rate": walk_forward.positive_fold_rate,
+                "walk_forward_worst_drawdown": walk_forward.worst_drawdown,
+                "walk_forward_worst_fold": walk_forward.worst_fold,
+                "walk_forward_best_fold": walk_forward.best_fold,
             }
+        ]
+    )
+    fold_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "fold": fold.fold,
+                "train_start": fold.split.train_start,
+                "train_end": fold.split.train_end,
+                "test_start": fold.split.test_start,
+                "test_end": fold.split.test_end,
+                "total_pnl": fold.summary.total_return,
+                "sharpe": fold.summary.sharpe,
+                "max_drawdown": fold.summary.max_drawdown,
+                "max_drawdown_duration": fold.summary.max_drawdown_duration,
+                "trades": fold.summary.trades,
+                "turnover": fold.summary.turnover,
+                "hit_rate": fold.summary.hit_rate,
+                "profit_factor": fold.summary.profit_factor,
+                "time_under_water": fold.summary.time_under_water,
+            }
+            for fold in folds
         ]
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
     summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
+    fold_frame.to_csv(output_dir / "mean_reversion_walk_forward.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,
         output_dir / "mean_reversion_diagnostic.png",

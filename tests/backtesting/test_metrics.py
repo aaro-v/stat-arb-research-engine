@@ -108,7 +108,12 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert folds[0].summary.turnover == 2.0
     assert diagnostics.folds == 2
     assert diagnostics.total_return == pytest.approx(0.08)
+    assert diagnostics.mean_return == pytest.approx(0.04)
+    assert diagnostics.return_std > 0.0
+    assert diagnostics.sharpe_std > 0.0
     assert diagnostics.positive_fold_rate == 1.0
+    assert diagnostics.worst_fold == 1
+    assert diagnostics.best_fold == 0
 
 
 def test_summarize_walk_forward_pnl_validates_split_bounds() -> None:

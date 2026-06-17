@@ -27,9 +27,14 @@ class WalkForwardDiagnostics:
     folds: int
     mean_sharpe: float
     median_sharpe: float
+    sharpe_std: float
     worst_drawdown: float
     total_return: float
+    mean_return: float
+    return_std: float
     positive_fold_rate: float
+    worst_fold: int
+    best_fold: int
 
 
 def rolling_splits(
@@ -78,7 +83,9 @@ def summarize_walk_forward_pnl(
     fold_summaries: list[WalkForwardFoldSummary] = []
     for index, split in enumerate(splits):
         _validate_split(split, values.size)
-        test_positions = None if position_values is None else position_values[split.test_start : split.test_end]
+        test_positions = (
+            None if position_values is None else position_values[split.test_start : split.test_end]
+        )
         summary = summarize_pnl(
             values[split.test_start : split.test_end],
             periods_per_year=periods_per_year,
@@ -99,16 +106,25 @@ def aggregate_walk_forward_diagnostics(
     sharpes = np.array([fold.summary.sharpe for fold in folds], dtype=float)
     returns = np.array([fold.summary.total_return for fold in folds], dtype=float)
     drawdowns = np.array([fold.summary.max_drawdown for fold in folds], dtype=float)
+    worst_fold_index = int(np.argmin(returns))
+    best_fold_index = int(np.argmax(returns))
     return WalkForwardDiagnostics(
         folds=len(folds),
         mean_sharpe=float(np.mean(sharpes)),
         median_sharpe=float(np.median(sharpes)),
+        sharpe_std=float(np.std(sharpes, ddof=1)) if len(sharpes) > 1 else 0.0,
         worst_drawdown=float(np.min(drawdowns)),
         total_return=float(np.sum(returns)),
+        mean_return=float(np.mean(returns)),
+        return_std=float(np.std(returns, ddof=1)) if len(returns) > 1 else 0.0,
         positive_fold_rate=float(np.count_nonzero(returns > 0.0) / len(returns)),
+        worst_fold=folds[worst_fold_index].fold,
+        best_fold=folds[best_fold_index].fold,
     )
 
 
 def _validate_split(split: WalkForwardSplit, length: int) -> None:
-    if not (0 <= split.train_start < split.train_end <= split.test_start < split.test_end <= length):
+    if not (
+        0 <= split.train_start < split.train_end <= split.test_start < split.test_end <= length
+    ):
         raise ValueError(f"invalid walk-forward split bounds: {split}")
