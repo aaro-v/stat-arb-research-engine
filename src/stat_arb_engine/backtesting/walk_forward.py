@@ -86,10 +86,16 @@ def summarize_walk_forward_pnl(
         test_positions = (
             None if position_values is None else position_values[split.test_start : split.test_end]
         )
+        initial_position = (
+            0.0
+            if position_values is None or split.test_start == 0
+            else float(position_values[split.test_start - 1])
+        )
         summary = summarize_pnl(
             values[split.test_start : split.test_end],
             periods_per_year=periods_per_year,
             positions=test_positions,
+            initial_position=initial_position,
         )
         fold_summaries.append(WalkForwardFoldSummary(fold=index, split=split, summary=summary))
     return fold_summaries

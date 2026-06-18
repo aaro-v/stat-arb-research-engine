@@ -54,6 +54,22 @@ def test_summarize_pnl_with_position_path_diagnostics() -> None:
     assert summary.hit_rate == 0.5
 
 
+def test_summarize_pnl_respects_initial_position_for_turnover() -> None:
+    summary = summarize_pnl(
+        np.array([0.01, -0.005, 0.0]),
+        positions=np.array([1.0, 1.0, 0.0]),
+        initial_position=1.0,
+    )
+
+    assert summary.trades == 1
+    assert summary.turnover == 1.0
+
+
+def test_summarize_pnl_validates_initial_position() -> None:
+    with pytest.raises(ValueError, match="initial_position"):
+        summarize_pnl(np.array([0.01]), initial_position=float("nan"))
+
+
 def test_summarize_pnl_reports_drawdown_duration() -> None:
     summary = summarize_pnl(np.array([0.04, -0.01, -0.01, 0.005, 0.02, -0.005]))
 
@@ -105,7 +121,7 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
 
     assert [fold.fold for fold in folds] == [0, 1]
     assert [fold.summary.total_return for fold in folds] == [0.05, 0.03]
-    assert folds[0].summary.turnover == 2.0
+    assert folds[0].summary.turnover == 1.0
     assert diagnostics.folds == 2
     assert diagnostics.total_return == pytest.approx(0.08)
     assert diagnostics.mean_return == pytest.approx(0.04)
@@ -114,6 +130,17 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert diagnostics.positive_fold_rate == 1.0
     assert diagnostics.worst_fold == 1
     assert diagnostics.best_fold == 0
+
+
+def test_summarize_walk_forward_pnl_carries_position_across_test_boundary() -> None:
+    pnl = np.array([0.0, 0.0, 0.01, -0.005, 0.0])
+    positions = np.array([0.0, 1.0, 1.0, 1.0, 0.0])
+    splits = [WalkForwardSplit(train_start=0, train_end=2, test_start=2, test_end=5)]
+
+    [fold] = summarize_walk_forward_pnl(pnl, splits, positions=positions)
+
+    assert fold.summary.trades == 1
+    assert fold.summary.turnover == 1.0
 
 
 def test_summarize_walk_forward_pnl_validates_split_bounds() -> None:

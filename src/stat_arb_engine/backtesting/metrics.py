@@ -28,14 +28,17 @@ def summarize_pnl(
     pnl: np.ndarray,
     periods_per_year: int = 252,
     positions: np.ndarray | None = None,
+    initial_position: float = 0.0,
 ) -> BacktestSummary:
-    """Summarize a PnL vector with path diagnostics used in research review."""
+    """Summarize PnL and position paths, including turnover from a prior position."""
 
     values = np.asarray(pnl, dtype=float)
     if values.ndim != 1 or values.size == 0:
         raise ValueError("pnl must be a non-empty one-dimensional array")
     if periods_per_year <= 0:
         raise ValueError("periods_per_year must be positive")
+    if not np.isfinite(initial_position):
+        raise ValueError("initial_position must be finite")
 
     position_values = None if positions is None else np.asarray(positions, dtype=float)
     if position_values is not None and (
@@ -62,8 +65,9 @@ def summarize_pnl(
     turnover = 0.0
     average_holding_period = 0.0
     if position_values is not None:
-        trades = int(np.count_nonzero(np.diff(position_values, prepend=0.0)))
-        turnover = float(np.abs(np.diff(position_values, prepend=0.0)).sum())
+        position_changes = np.diff(position_values, prepend=initial_position)
+        trades = int(np.count_nonzero(position_changes))
+        turnover = float(np.abs(position_changes).sum())
         average_holding_period = _average_holding_period(position_values)
 
     return BacktestSummary(
