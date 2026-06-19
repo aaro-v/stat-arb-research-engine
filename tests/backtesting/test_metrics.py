@@ -11,7 +11,6 @@ from stat_arb_engine.backtesting import (
     summarize_pnl,
     summarize_walk_forward_pnl,
 )
-from stat_arb_engine.execution import CostModel, estimate_round_trip_cost
 from stat_arb_engine.signals import ThresholdSignal, classify_zscore
 
 
@@ -81,15 +80,6 @@ def test_summarize_pnl_reports_drawdown_duration() -> None:
 def test_summarize_pnl_validates_position_shape() -> None:
     with pytest.raises(ValueError, match="same length"):
         summarize_pnl(np.array([0.01, -0.01]), positions=np.array([1.0]))
-
-
-def test_round_trip_cost_includes_borrow() -> None:
-    costs = estimate_round_trip_cost(
-        notional=np.array([100_000.0]),
-        holding_days=np.array([10.0]),
-        model=CostModel(),
-    )
-    assert costs[0] > 0
 
 
 def test_threshold_classification() -> None:

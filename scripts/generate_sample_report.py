@@ -11,6 +11,7 @@ from stat_arb_engine.backtesting import (
     summarize_pnl,
     summarize_walk_forward_pnl,
 )
+from stat_arb_engine.execution import CostModel, estimate_position_costs
 from stat_arb_engine.reporting.charts import plot_mean_reversion_diagnostic
 from stat_arb_engine.signals import ThresholdPolicy, ThresholdSignal, classify_zscore
 
@@ -39,10 +40,13 @@ def build_sample_diagnostic(days: int = 320, seed: int = 17) -> pd.DataFrame:
             position = 0.0
         positions.append(position)
 
+    position_series = pd.Series(positions)
     spread_change = pd.Series(spread).diff().fillna(0.0)
-    pnl = -pd.Series(positions).shift(1).fillna(0.0) * spread_change - 0.002 * pd.Series(
-        positions
-    ).diff().abs().fillna(0.0)
+    trading_costs = estimate_position_costs(
+        position_series.to_numpy(),
+        CostModel(commission_bps=10.0, slippage_bps=10.0, borrow_bps_per_year=0.0),
+    )
+    pnl = -position_series.shift(1).fillna(0.0) * spread_change - trading_costs
     return pd.DataFrame(
         {
             "date": pd.bdate_range("2024-01-02", periods=days),
