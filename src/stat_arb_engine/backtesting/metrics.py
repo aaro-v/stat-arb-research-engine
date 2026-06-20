@@ -22,6 +22,10 @@ class BacktestSummary:
     tail_loss_95: float = 0.0
     expected_shortfall_95: float = 0.0
     time_under_water: int = 0
+    underwater_fraction: float = 0.0
+    average_drawdown: float = 0.0
+    ulcer_index: float = 0.0
+    drawdown_recovery_ratio: float = 0.0
 
 
 def summarize_pnl(
@@ -49,6 +53,9 @@ def summarize_pnl(
     equity = np.cumsum(values)
     drawdowns = equity - np.maximum.accumulate(equity)
     max_drawdown_duration, time_under_water = _drawdown_duration(drawdowns)
+    underwater_fraction = float(time_under_water / values.size)
+    average_drawdown = _average_drawdown(drawdowns)
+    ulcer_index = _ulcer_index(drawdowns)
     volatility = np.std(values, ddof=1) if values.size > 1 else 0.0
     sharpe = 0.0 if volatility == 0 else float(np.mean(values) / volatility * np.sqrt(periods_per_year))
     downside_deviation = _downside_deviation(values)
@@ -86,6 +93,10 @@ def summarize_pnl(
         tail_loss_95=tail_loss_95,
         expected_shortfall_95=expected_shortfall_95,
         time_under_water=time_under_water,
+        underwater_fraction=underwater_fraction,
+        average_drawdown=average_drawdown,
+        ulcer_index=ulcer_index,
+        drawdown_recovery_ratio=_drawdown_recovery_ratio(float(equity[-1]), float(drawdowns.min(initial=0.0))),
     )
 
 
@@ -126,6 +137,22 @@ def _drawdown_duration(drawdowns: np.ndarray) -> tuple[int, int]:
         else:
             current_duration = 0
     return max_duration, time_under_water
+
+
+def _average_drawdown(drawdowns: np.ndarray) -> float:
+    underwater = drawdowns[drawdowns < 0.0]
+    return 0.0 if underwater.size == 0 else float(np.mean(underwater))
+
+
+def _ulcer_index(drawdowns: np.ndarray) -> float:
+    underwater = np.minimum(drawdowns, 0.0)
+    return float(np.sqrt(np.mean(np.square(underwater))))
+
+
+def _drawdown_recovery_ratio(total_return: float, max_drawdown: float) -> float:
+    if max_drawdown == 0.0:
+        return float("inf") if total_return > 0.0 else 0.0
+    return float(total_return / abs(max_drawdown))
 
 
 def _average_holding_period(positions: np.ndarray) -> float:

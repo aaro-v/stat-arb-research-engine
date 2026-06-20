@@ -88,6 +88,10 @@ def main() -> None:
                 "tail_loss_95": summary.tail_loss_95,
                 "expected_shortfall_95": summary.expected_shortfall_95,
                 "time_under_water": summary.time_under_water,
+                "underwater_fraction": summary.underwater_fraction,
+                "average_drawdown": summary.average_drawdown,
+                "ulcer_index": summary.ulcer_index,
+                "drawdown_recovery_ratio": summary.drawdown_recovery_ratio,
                 "walk_forward_folds": walk_forward.folds,
                 "walk_forward_mean_sharpe": walk_forward.mean_sharpe,
                 "walk_forward_median_sharpe": walk_forward.median_sharpe,
@@ -120,6 +124,10 @@ def main() -> None:
                 "hit_rate": fold.summary.hit_rate,
                 "profit_factor": fold.summary.profit_factor,
                 "time_under_water": fold.summary.time_under_water,
+                "underwater_fraction": fold.summary.underwater_fraction,
+                "average_drawdown": fold.summary.average_drawdown,
+                "ulcer_index": fold.summary.ulcer_index,
+                "drawdown_recovery_ratio": fold.summary.drawdown_recovery_ratio,
             }
             for fold in folds
         ]

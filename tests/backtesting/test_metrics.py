@@ -75,6 +75,10 @@ def test_summarize_pnl_reports_drawdown_duration() -> None:
     assert summary.max_drawdown == pytest.approx(-0.02)
     assert summary.max_drawdown_duration == 3
     assert summary.time_under_water == 4
+    assert summary.underwater_fraction == pytest.approx(4 / 6)
+    assert summary.average_drawdown == pytest.approx(-0.0125)
+    assert summary.ulcer_index == pytest.approx(np.sqrt(0.00075 / 6))
+    assert summary.drawdown_recovery_ratio == pytest.approx(2.0)
 
 
 def test_summarize_pnl_validates_position_shape() -> None:

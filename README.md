@@ -56,6 +56,8 @@ same deterministic engineering validation run with path diagnostics including
 PnL, Sharpe, drawdown, trade count, hit rate, profit factor, turnover, and
 average holding period. It also records drawdown-duration and time-under-water
 metrics so reviewers can inspect path persistence, not just return magnitude.
+It also includes underwater fraction, average drawdown, ulcer index, and
+drawdown recovery ratio for a more complete view of drawdown persistence.
 The companion `reports/generated/mean_reversion_walk_forward.csv` file breaks
 the same synthetic path into deterministic out-of-sample folds with fold-level
 PnL, drawdown, turnover, and hit-rate diagnostics.
