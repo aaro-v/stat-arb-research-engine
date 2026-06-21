@@ -99,10 +99,16 @@ def main() -> None:
                 "walk_forward_total_return": walk_forward.total_return,
                 "walk_forward_mean_return": walk_forward.mean_return,
                 "walk_forward_return_std": walk_forward.return_std,
+                "walk_forward_return_consistency": walk_forward.return_consistency,
                 "walk_forward_positive_fold_rate": walk_forward.positive_fold_rate,
+                "walk_forward_positive_return_concentration": (
+                    walk_forward.positive_return_concentration
+                ),
                 "walk_forward_worst_drawdown": walk_forward.worst_drawdown,
                 "walk_forward_worst_fold": walk_forward.worst_fold,
+                "walk_forward_worst_fold_return": walk_forward.worst_fold_return,
                 "walk_forward_best_fold": walk_forward.best_fold,
+                "walk_forward_best_fold_return": walk_forward.best_fold_return,
             }
         ]
     )

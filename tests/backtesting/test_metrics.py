@@ -120,10 +120,30 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert diagnostics.total_return == pytest.approx(0.08)
     assert diagnostics.mean_return == pytest.approx(0.04)
     assert diagnostics.return_std > 0.0
+    assert diagnostics.return_consistency > 0.0
     assert diagnostics.sharpe_std > 0.0
     assert diagnostics.positive_fold_rate == 1.0
+    assert diagnostics.positive_return_concentration == pytest.approx(0.625)
     assert diagnostics.worst_fold == 1
+    assert diagnostics.worst_fold_return == pytest.approx(0.03)
     assert diagnostics.best_fold == 0
+    assert diagnostics.best_fold_return == pytest.approx(0.05)
+
+
+def test_walk_forward_diagnostics_reports_single_fold_consistency() -> None:
+    folds = summarize_walk_forward_pnl(
+        np.array([0.0, 0.0, 0.02, 0.01]),
+        [WalkForwardSplit(train_start=0, train_end=2, test_start=2, test_end=4)],
+    )
+
+    diagnostics = aggregate_walk_forward_diagnostics(folds)
+
+    assert diagnostics.return_std == 0.0
+    assert diagnostics.return_consistency == float("inf")
+    assert diagnostics.positive_fold_rate == 1.0
+    assert diagnostics.positive_return_concentration == 1.0
+    assert diagnostics.worst_fold_return == pytest.approx(0.03)
+    assert diagnostics.best_fold_return == pytest.approx(0.03)
 
 
 def test_summarize_walk_forward_pnl_carries_position_across_test_boundary() -> None:

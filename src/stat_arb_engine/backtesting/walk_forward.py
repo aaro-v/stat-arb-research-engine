@@ -32,9 +32,13 @@ class WalkForwardDiagnostics:
     total_return: float
     mean_return: float
     return_std: float
+    return_consistency: float
     positive_fold_rate: float
+    positive_return_concentration: float
     worst_fold: int
+    worst_fold_return: float
     best_fold: int
+    best_fold_return: float
 
 
 def rolling_splits(
@@ -114,6 +118,8 @@ def aggregate_walk_forward_diagnostics(
     drawdowns = np.array([fold.summary.max_drawdown for fold in folds], dtype=float)
     worst_fold_index = int(np.argmin(returns))
     best_fold_index = int(np.argmax(returns))
+    return_std = float(np.std(returns, ddof=1)) if len(returns) > 1 else 0.0
+    mean_return = float(np.mean(returns))
     return WalkForwardDiagnostics(
         folds=len(folds),
         mean_sharpe=float(np.mean(sharpes)),
@@ -121,11 +127,15 @@ def aggregate_walk_forward_diagnostics(
         sharpe_std=float(np.std(sharpes, ddof=1)) if len(sharpes) > 1 else 0.0,
         worst_drawdown=float(np.min(drawdowns)),
         total_return=float(np.sum(returns)),
-        mean_return=float(np.mean(returns)),
-        return_std=float(np.std(returns, ddof=1)) if len(returns) > 1 else 0.0,
+        mean_return=mean_return,
+        return_std=return_std,
+        return_consistency=_return_consistency(mean_return, return_std),
         positive_fold_rate=float(np.count_nonzero(returns > 0.0) / len(returns)),
+        positive_return_concentration=_positive_return_concentration(returns),
         worst_fold=folds[worst_fold_index].fold,
+        worst_fold_return=float(returns[worst_fold_index]),
         best_fold=folds[best_fold_index].fold,
+        best_fold_return=float(returns[best_fold_index]),
     )
 
 
@@ -134,3 +144,17 @@ def _validate_split(split: WalkForwardSplit, length: int) -> None:
         0 <= split.train_start < split.train_end <= split.test_start < split.test_end <= length
     ):
         raise ValueError(f"invalid walk-forward split bounds: {split}")
+
+
+def _return_consistency(mean_return: float, return_std: float) -> float:
+    if return_std == 0.0:
+        return float("inf") if mean_return > 0.0 else 0.0
+    return float(mean_return / return_std)
+
+
+def _positive_return_concentration(returns: np.ndarray) -> float:
+    positive_returns = returns[returns > 0.0]
+    total_positive_return = positive_returns.sum(initial=0.0)
+    if total_positive_return == 0.0:
+        return 0.0
+    return float(positive_returns.max(initial=0.0) / total_positive_return)

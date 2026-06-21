@@ -60,7 +60,10 @@ It also includes underwater fraction, average drawdown, ulcer index, and
 drawdown recovery ratio for a more complete view of drawdown persistence.
 The companion `reports/generated/mean_reversion_walk_forward.csv` file breaks
 the same synthetic path into deterministic out-of-sample folds with fold-level
-PnL, drawdown, turnover, and hit-rate diagnostics.
+PnL, drawdown, turnover, and hit-rate diagnostics. The summary also includes
+fold consistency and positive-return concentration metrics to flag whether a
+synthetic validation result is broadly persistent or dominated by a small
+number of out-of-sample windows.
 
 ## Project Layout
 
