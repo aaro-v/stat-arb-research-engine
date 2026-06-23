@@ -63,7 +63,9 @@ the same synthetic path into deterministic out-of-sample folds with fold-level
 PnL, drawdown, turnover, and hit-rate diagnostics. The summary also includes
 fold consistency and positive-return concentration metrics to flag whether a
 synthetic validation result is broadly persistent or dominated by a small
-number of out-of-sample windows.
+number of out-of-sample windows. It also reports the fold mean-return standard
+error, t-statistic, and normal-approximation 95% confidence interval as
+engineering diagnostics for out-of-sample stability.
 
 ## Project Layout
 

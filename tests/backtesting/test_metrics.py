@@ -120,6 +120,10 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert diagnostics.total_return == pytest.approx(0.08)
     assert diagnostics.mean_return == pytest.approx(0.04)
     assert diagnostics.return_std > 0.0
+    assert diagnostics.return_standard_error == pytest.approx(0.01)
+    assert diagnostics.return_t_stat == pytest.approx(4.0)
+    assert diagnostics.return_ci95_lower == pytest.approx(0.0204)
+    assert diagnostics.return_ci95_upper == pytest.approx(0.0596)
     assert diagnostics.return_consistency > 0.0
     assert diagnostics.sharpe_std > 0.0
     assert diagnostics.positive_fold_rate == 1.0
@@ -139,6 +143,10 @@ def test_walk_forward_diagnostics_reports_single_fold_consistency() -> None:
     diagnostics = aggregate_walk_forward_diagnostics(folds)
 
     assert diagnostics.return_std == 0.0
+    assert diagnostics.return_standard_error == 0.0
+    assert diagnostics.return_t_stat == float("inf")
+    assert diagnostics.return_ci95_lower == pytest.approx(0.03)
+    assert diagnostics.return_ci95_upper == pytest.approx(0.03)
     assert diagnostics.return_consistency == float("inf")
     assert diagnostics.positive_fold_rate == 1.0
     assert diagnostics.positive_return_concentration == 1.0

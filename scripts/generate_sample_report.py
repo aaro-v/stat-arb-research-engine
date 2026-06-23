@@ -99,6 +99,10 @@ def main() -> None:
                 "walk_forward_total_return": walk_forward.total_return,
                 "walk_forward_mean_return": walk_forward.mean_return,
                 "walk_forward_return_std": walk_forward.return_std,
+                "walk_forward_return_standard_error": walk_forward.return_standard_error,
+                "walk_forward_return_t_stat": walk_forward.return_t_stat,
+                "walk_forward_return_ci95_lower": walk_forward.return_ci95_lower,
+                "walk_forward_return_ci95_upper": walk_forward.return_ci95_upper,
                 "walk_forward_return_consistency": walk_forward.return_consistency,
                 "walk_forward_positive_fold_rate": walk_forward.positive_fold_rate,
                 "walk_forward_positive_return_concentration": (

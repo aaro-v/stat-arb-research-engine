@@ -32,6 +32,10 @@ class WalkForwardDiagnostics:
     total_return: float
     mean_return: float
     return_std: float
+    return_standard_error: float
+    return_t_stat: float
+    return_ci95_lower: float
+    return_ci95_upper: float
     return_consistency: float
     positive_fold_rate: float
     positive_return_concentration: float
@@ -120,6 +124,7 @@ def aggregate_walk_forward_diagnostics(
     best_fold_index = int(np.argmax(returns))
     return_std = float(np.std(returns, ddof=1)) if len(returns) > 1 else 0.0
     mean_return = float(np.mean(returns))
+    return_standard_error = _standard_error(return_std, len(returns))
     return WalkForwardDiagnostics(
         folds=len(folds),
         mean_sharpe=float(np.mean(sharpes)),
@@ -129,6 +134,10 @@ def aggregate_walk_forward_diagnostics(
         total_return=float(np.sum(returns)),
         mean_return=mean_return,
         return_std=return_std,
+        return_standard_error=return_standard_error,
+        return_t_stat=_return_t_stat(mean_return, return_standard_error),
+        return_ci95_lower=mean_return - 1.96 * return_standard_error,
+        return_ci95_upper=mean_return + 1.96 * return_standard_error,
         return_consistency=_return_consistency(mean_return, return_std),
         positive_fold_rate=float(np.count_nonzero(returns > 0.0) / len(returns)),
         positive_return_concentration=_positive_return_concentration(returns),
@@ -150,6 +159,16 @@ def _return_consistency(mean_return: float, return_std: float) -> float:
     if return_std == 0.0:
         return float("inf") if mean_return > 0.0 else 0.0
     return float(mean_return / return_std)
+
+
+def _standard_error(std: float, observations: int) -> float:
+    return 0.0 if observations <= 1 else float(std / np.sqrt(observations))
+
+
+def _return_t_stat(mean_return: float, standard_error: float) -> float:
+    if standard_error == 0.0:
+        return float("inf") if mean_return > 0.0 else 0.0
+    return float(mean_return / standard_error)
 
 
 def _positive_return_concentration(returns: np.ndarray) -> float:
