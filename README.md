@@ -66,6 +66,10 @@ synthetic validation result is broadly persistent or dominated by a small
 number of out-of-sample windows. It also reports the fold mean-return standard
 error, t-statistic, and normal-approximation 95% confidence interval as
 engineering diagnostics for out-of-sample stability.
+The `reports/generated/mean_reversion_stress.csv` file adds deterministic
+moving-block bootstrap stress diagnostics for the same synthetic path,
+including simulated return quantiles, loss probability, drawdown quantile, and
+expected shortfall.
 
 ## Project Layout
 

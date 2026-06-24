@@ -7,6 +7,7 @@ import pandas as pd
 
 from stat_arb_engine.backtesting import (
     aggregate_walk_forward_diagnostics,
+    block_bootstrap_stress,
     rolling_splits,
     summarize_pnl,
     summarize_walk_forward_pnl,
@@ -69,6 +70,13 @@ def main() -> None:
         positions=frame["position"].to_numpy(),
     )
     walk_forward = aggregate_walk_forward_diagnostics(folds)
+    stress = block_bootstrap_stress(
+        frame["pnl"].to_numpy(),
+        simulations=1_000,
+        horizon=126,
+        block_size=10,
+        seed=23,
+    )
     summary_frame = pd.DataFrame(
         [
             {
@@ -142,10 +150,28 @@ def main() -> None:
             for fold in folds
         ]
     )
+    stress_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "simulations": stress.simulations,
+                "horizon": stress.horizon,
+                "block_size": stress.block_size,
+                "mean_total_return": stress.mean_total_return,
+                "median_total_return": stress.median_total_return,
+                "total_return_p05": stress.total_return_p05,
+                "total_return_p95": stress.total_return_p95,
+                "loss_probability": stress.loss_probability,
+                "max_drawdown_p05": stress.max_drawdown_p05,
+                "expected_shortfall_95": stress.expected_shortfall_95,
+            }
+        ]
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
     summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
     fold_frame.to_csv(output_dir / "mean_reversion_walk_forward.csv", index=False)
+    stress_frame.to_csv(output_dir / "mean_reversion_stress.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,
         output_dir / "mean_reversion_diagnostic.png",

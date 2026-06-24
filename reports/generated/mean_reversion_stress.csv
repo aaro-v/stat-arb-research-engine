@@ -1,0 +1,2 @@
+dataset,simulations,horizon,block_size,mean_total_return,median_total_return,total_return_p05,total_return_p95,loss_probability,max_drawdown_p05,expected_shortfall_95
+deterministic_synthetic_engineering_validation,1000,126,10,-4.343078450777253,-4.511121617359295,-11.91814803467433,3.4451437825820683,0.834,-13.004117245938499,13.678483039549963
