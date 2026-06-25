@@ -70,6 +70,9 @@ The `reports/generated/mean_reversion_stress.csv` file adds deterministic
 moving-block bootstrap stress diagnostics for the same synthetic path,
 including simulated return quantiles, loss probability, drawdown quantile, and
 expected shortfall.
+The `reports/generated/mean_reversion_decay.csv` file records rolling 63-day
+window diagnostics with overlapping 21-day steps, and the summary captures
+early-vs-recent return and Sharpe decay checks for strategy monitoring.
 
 ## Project Layout
 

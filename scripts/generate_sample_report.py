@@ -6,8 +6,10 @@ import numpy as np
 import pandas as pd
 
 from stat_arb_engine.backtesting import (
+    aggregate_decay_diagnostics,
     aggregate_walk_forward_diagnostics,
     block_bootstrap_stress,
+    rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
     summarize_walk_forward_pnl,
@@ -70,6 +72,13 @@ def main() -> None:
         positions=frame["position"].to_numpy(),
     )
     walk_forward = aggregate_walk_forward_diagnostics(folds)
+    rolling_windows = rolling_window_summaries(
+        frame["pnl"].to_numpy(),
+        window_size=63,
+        step=21,
+        positions=frame["position"].to_numpy(),
+    )
+    decay = aggregate_decay_diagnostics(rolling_windows, comparison_windows=2)
     stress = block_bootstrap_stress(
         frame["pnl"].to_numpy(),
         simulations=1_000,
@@ -121,6 +130,20 @@ def main() -> None:
                 "walk_forward_worst_fold_return": walk_forward.worst_fold_return,
                 "walk_forward_best_fold": walk_forward.best_fold,
                 "walk_forward_best_fold_return": walk_forward.best_fold_return,
+                "decay_windows": decay.windows,
+                "decay_window_size": decay.window_size,
+                "decay_recent_window_return": decay.recent_window_return,
+                "decay_early_mean_return": decay.early_mean_return,
+                "decay_recent_mean_return": decay.recent_mean_return,
+                "decay_return_decay": decay.return_decay,
+                "decay_early_mean_sharpe": decay.early_mean_sharpe,
+                "decay_recent_mean_sharpe": decay.recent_mean_sharpe,
+                "decay_sharpe_decay": decay.sharpe_decay,
+                "decay_negative_window_rate": decay.negative_window_rate,
+                "decay_worst_window": decay.worst_window,
+                "decay_worst_window_return": decay.worst_window_return,
+                "decay_best_window": decay.best_window,
+                "decay_best_window_return": decay.best_window_return,
             }
         ]
     )
@@ -150,6 +173,30 @@ def main() -> None:
             for fold in folds
         ]
     )
+    rolling_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "window": window.window,
+                "start": window.start,
+                "end": window.end,
+                "total_pnl": window.summary.total_return,
+                "sharpe": window.summary.sharpe,
+                "max_drawdown": window.summary.max_drawdown,
+                "max_drawdown_duration": window.summary.max_drawdown_duration,
+                "trades": window.summary.trades,
+                "turnover": window.summary.turnover,
+                "hit_rate": window.summary.hit_rate,
+                "profit_factor": window.summary.profit_factor,
+                "time_under_water": window.summary.time_under_water,
+                "underwater_fraction": window.summary.underwater_fraction,
+                "average_drawdown": window.summary.average_drawdown,
+                "ulcer_index": window.summary.ulcer_index,
+                "drawdown_recovery_ratio": window.summary.drawdown_recovery_ratio,
+            }
+            for window in rolling_windows
+        ]
+    )
     stress_frame = pd.DataFrame(
         [
             {
@@ -171,6 +218,7 @@ def main() -> None:
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
     summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
     fold_frame.to_csv(output_dir / "mean_reversion_walk_forward.csv", index=False)
+    rolling_frame.to_csv(output_dir / "mean_reversion_decay.csv", index=False)
     stress_frame.to_csv(output_dir / "mean_reversion_stress.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,

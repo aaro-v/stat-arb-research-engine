@@ -5,8 +5,10 @@ import pytest
 
 from stat_arb_engine.backtesting import (
     WalkForwardSplit,
+    aggregate_decay_diagnostics,
     aggregate_walk_forward_diagnostics,
     block_bootstrap_stress,
+    rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
     summarize_walk_forward_pnl,
@@ -171,6 +173,51 @@ def test_summarize_walk_forward_pnl_validates_split_bounds() -> None:
             np.array([0.01, -0.01]),
             [WalkForwardSplit(train_start=0, train_end=1, test_start=1, test_end=3)],
         )
+
+
+def test_rolling_window_summaries_measure_decay() -> None:
+    pnl = np.array([0.03, 0.02, 0.01, 0.01, -0.02, -0.01, -0.03, -0.02])
+    positions = np.array([0.0, 1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 0.0])
+
+    windows = rolling_window_summaries(pnl, window_size=4, step=2, positions=positions)
+    diagnostics = aggregate_decay_diagnostics(windows, comparison_windows=1)
+
+    assert [window.start for window in windows] == [0, 2, 4]
+    assert [window.end for window in windows] == [4, 6, 8]
+    assert windows[0].summary.total_return == pytest.approx(0.07)
+    assert windows[1].summary.turnover == 2.0
+    assert diagnostics.windows == 3
+    assert diagnostics.window_size == 4
+    assert diagnostics.recent_window_return == pytest.approx(-0.08)
+    assert diagnostics.return_decay == pytest.approx(-0.15)
+    assert diagnostics.sharpe_decay < 0.0
+    assert diagnostics.negative_window_rate == pytest.approx(2 / 3)
+    assert diagnostics.worst_window == 2
+    assert diagnostics.best_window == 0
+
+
+def test_rolling_window_summaries_validate_inputs() -> None:
+    with pytest.raises(ValueError, match="window_size"):
+        rolling_window_summaries(np.array([0.01]), window_size=0)
+    with pytest.raises(ValueError, match="no larger"):
+        rolling_window_summaries(np.array([0.01]), window_size=2)
+    with pytest.raises(ValueError, match="step"):
+        rolling_window_summaries(np.array([0.01, 0.02]), window_size=1, step=0)
+    with pytest.raises(ValueError, match="same length"):
+        rolling_window_summaries(
+            np.array([0.01, 0.02]),
+            window_size=1,
+            positions=np.array([1.0]),
+        )
+
+
+def test_decay_diagnostics_validate_inputs() -> None:
+    with pytest.raises(ValueError, match="windows"):
+        aggregate_decay_diagnostics([])
+
+    windows = rolling_window_summaries(np.array([0.01, 0.02]), window_size=1)
+    with pytest.raises(ValueError, match="comparison_windows"):
+        aggregate_decay_diagnostics(windows, comparison_windows=0)
 
 
 def test_block_bootstrap_stress_is_deterministic_with_seed() -> None:

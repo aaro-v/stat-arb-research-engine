@@ -1,3 +1,9 @@
+from .decay import (
+    DecayDiagnostics,
+    RollingWindowSummary,
+    aggregate_decay_diagnostics,
+    rolling_window_summaries,
+)
 from .metrics import BacktestSummary, summarize_pnl
 from .stress import BootstrapStressSummary, block_bootstrap_stress
 from .walk_forward import (
@@ -12,11 +18,15 @@ from .walk_forward import (
 __all__ = [
     "BacktestSummary",
     "BootstrapStressSummary",
+    "DecayDiagnostics",
+    "RollingWindowSummary",
     "WalkForwardDiagnostics",
     "WalkForwardFoldSummary",
     "WalkForwardSplit",
+    "aggregate_decay_diagnostics",
     "aggregate_walk_forward_diagnostics",
     "block_bootstrap_stress",
+    "rolling_window_summaries",
     "rolling_splits",
     "summarize_pnl",
     "summarize_walk_forward_pnl",
