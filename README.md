@@ -73,6 +73,9 @@ expected shortfall.
 The `reports/generated/mean_reversion_decay.csv` file records rolling 63-day
 window diagnostics with overlapping 21-day steps, and the summary captures
 early-vs-recent return and Sharpe decay checks for strategy monitoring.
+The `reports/generated/mean_reversion_drawdowns.csv` file records each
+contiguous drawdown episode, including start, trough, recovery endpoint,
+depth, duration, and recovery duration for path-level review.
 
 ## Project Layout
 

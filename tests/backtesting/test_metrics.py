@@ -8,6 +8,7 @@ from stat_arb_engine.backtesting import (
     aggregate_decay_diagnostics,
     aggregate_walk_forward_diagnostics,
     block_bootstrap_stress,
+    drawdown_episodes,
     rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
@@ -81,6 +82,31 @@ def test_summarize_pnl_reports_drawdown_duration() -> None:
     assert summary.average_drawdown == pytest.approx(-0.0125)
     assert summary.ulcer_index == pytest.approx(np.sqrt(0.00075 / 6))
     assert summary.drawdown_recovery_ratio == pytest.approx(2.0)
+
+
+def test_drawdown_episodes_report_recovery_paths() -> None:
+    episodes = drawdown_episodes(np.array([0.04, -0.01, -0.02, 0.01, 0.03, -0.02, 0.01]))
+
+    assert episodes[0].start == 1
+    assert episodes[0].trough == 2
+    assert episodes[0].end == 4
+    assert episodes[0].depth == pytest.approx(-0.03)
+    assert episodes[0].duration == 3
+    assert episodes[0].recovery_duration == 4
+    assert episodes[1].start == 5
+    assert episodes[1].trough == 5
+    assert episodes[1].end is None
+    assert episodes[1].depth == pytest.approx(-0.02)
+    assert episodes[1].duration == 2
+    assert episodes[1].recovery_duration is None
+
+
+def test_drawdown_episodes_validate_inputs() -> None:
+    with pytest.raises(ValueError, match="non-empty"):
+        drawdown_episodes(np.array([]))
+
+    with pytest.raises(ValueError, match="one-dimensional"):
+        drawdown_episodes(np.array([[0.01, -0.01]]))
 
 
 def test_summarize_pnl_validates_position_shape() -> None:

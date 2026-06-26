@@ -28,6 +28,16 @@ class BacktestSummary:
     drawdown_recovery_ratio: float = 0.0
 
 
+@dataclass(frozen=True)
+class DrawdownEpisode:
+    start: int
+    trough: int
+    end: int | None
+    depth: float
+    duration: int
+    recovery_duration: int | None
+
+
 def summarize_pnl(
     pnl: np.ndarray,
     periods_per_year: int = 252,
@@ -102,6 +112,59 @@ def summarize_pnl(
 
 def _count_pnl_sign_changes(values: np.ndarray) -> int:
     return int(np.count_nonzero(np.diff(np.sign(values), prepend=0.0)))
+
+
+def drawdown_episodes(pnl: np.ndarray) -> list[DrawdownEpisode]:
+    """Return contiguous drawdown episodes from a PnL path."""
+
+    values = np.asarray(pnl, dtype=float)
+    if values.ndim != 1 or values.size == 0:
+        raise ValueError("pnl must be a non-empty one-dimensional array")
+
+    equity = np.cumsum(values)
+    high_water = np.maximum.accumulate(equity)
+    drawdowns = equity - high_water
+    episodes: list[DrawdownEpisode] = []
+    start: int | None = None
+    peak_index: int | None = None
+    trough = 0
+    depth = 0.0
+    for index, drawdown in enumerate(drawdowns):
+        if drawdown < 0.0 and start is None:
+            peak_index = index - 1 if index > 0 else 0
+            start = index
+            trough = index
+            depth = float(drawdown)
+        elif drawdown < 0.0 and start is not None and drawdown < depth:
+            trough = index
+            depth = float(drawdown)
+        elif drawdown == 0.0 and start is not None:
+            episodes.append(
+                DrawdownEpisode(
+                    start=start,
+                    trough=trough,
+                    end=index,
+                    depth=depth,
+                    duration=index - start,
+                    recovery_duration=None if peak_index is None else index - peak_index,
+                )
+            )
+            start = None
+            peak_index = None
+            depth = 0.0
+
+    if start is not None:
+        episodes.append(
+            DrawdownEpisode(
+                start=start,
+                trough=trough,
+                end=None,
+                depth=depth,
+                duration=values.size - start,
+                recovery_duration=None,
+            )
+        )
+    return episodes
 
 
 def _safe_profit_factor(gains: float, losses: float) -> float:

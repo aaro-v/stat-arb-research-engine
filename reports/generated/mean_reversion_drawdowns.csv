@@ -1,0 +1,4 @@
+dataset,episode,start,trough,end,depth,duration,recovery_duration
+deterministic_synthetic_engineering_validation,0,21,82,104,-3.9619223965294488,83,84
+deterministic_synthetic_engineering_validation,1,105,106,107,-0.12393754333832518,2,3
+deterministic_synthetic_engineering_validation,2,109,313,,-12.857903217170305,211,

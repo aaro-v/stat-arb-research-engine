@@ -9,6 +9,7 @@ from stat_arb_engine.backtesting import (
     aggregate_decay_diagnostics,
     aggregate_walk_forward_diagnostics,
     block_bootstrap_stress,
+    drawdown_episodes,
     rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
@@ -86,6 +87,7 @@ def main() -> None:
         block_size=10,
         seed=23,
     )
+    drawdowns = drawdown_episodes(frame["pnl"].to_numpy())
     summary_frame = pd.DataFrame(
         [
             {
@@ -214,12 +216,28 @@ def main() -> None:
             }
         ]
     )
+    drawdown_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "episode": index,
+                "start": episode.start,
+                "trough": episode.trough,
+                "end": episode.end,
+                "depth": episode.depth,
+                "duration": episode.duration,
+                "recovery_duration": episode.recovery_duration,
+            }
+            for index, episode in enumerate(drawdowns)
+        ]
+    ).astype({"end": "Int64", "recovery_duration": "Int64"})
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
     summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
     fold_frame.to_csv(output_dir / "mean_reversion_walk_forward.csv", index=False)
     rolling_frame.to_csv(output_dir / "mean_reversion_decay.csv", index=False)
     stress_frame.to_csv(output_dir / "mean_reversion_stress.csv", index=False)
+    drawdown_frame.to_csv(output_dir / "mean_reversion_drawdowns.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,
         output_dir / "mean_reversion_diagnostic.png",
