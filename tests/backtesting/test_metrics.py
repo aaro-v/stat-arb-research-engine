@@ -53,6 +53,12 @@ def test_summarize_pnl_with_position_path_diagnostics() -> None:
     assert summary.trades == 4
     assert summary.turnover == 4.0
     assert summary.average_holding_period == 1.5
+    assert summary.active_fraction == pytest.approx(3 / 6)
+    assert summary.long_fraction == pytest.approx(2 / 6)
+    assert summary.short_fraction == pytest.approx(1 / 6)
+    assert summary.flat_fraction == pytest.approx(3 / 6)
+    assert summary.average_abs_position == pytest.approx(0.5)
+    assert summary.max_abs_position == pytest.approx(1.0)
     assert summary.hit_rate == 0.5
 
 
@@ -144,6 +150,8 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert [fold.fold for fold in folds] == [0, 1]
     assert [fold.summary.total_return for fold in folds] == [0.05, 0.03]
     assert folds[0].summary.turnover == 1.0
+    assert folds[1].summary.short_fraction == 0.5
+    assert folds[1].summary.flat_fraction == 0.5
     assert diagnostics.folds == 2
     assert diagnostics.total_return == pytest.approx(0.08)
     assert diagnostics.mean_return == pytest.approx(0.04)

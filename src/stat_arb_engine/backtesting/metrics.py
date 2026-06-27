@@ -16,6 +16,12 @@ class BacktestSummary:
     profit_factor: float = 0.0
     turnover: float = 0.0
     average_holding_period: float = 0.0
+    active_fraction: float = 0.0
+    long_fraction: float = 0.0
+    short_fraction: float = 0.0
+    flat_fraction: float = 0.0
+    average_abs_position: float = 0.0
+    max_abs_position: float = 0.0
     annualized_volatility: float = 0.0
     downside_deviation: float = 0.0
     sortino: float = 0.0
@@ -81,11 +87,25 @@ def summarize_pnl(
     trades = _count_pnl_sign_changes(values)
     turnover = 0.0
     average_holding_period = 0.0
+    active_fraction = 0.0
+    long_fraction = 0.0
+    short_fraction = 0.0
+    flat_fraction = 0.0
+    average_abs_position = 0.0
+    max_abs_position = 0.0
     if position_values is not None:
         position_changes = np.diff(position_values, prepend=initial_position)
         trades = int(np.count_nonzero(position_changes))
         turnover = float(np.abs(position_changes).sum())
         average_holding_period = _average_holding_period(position_values)
+        (
+            active_fraction,
+            long_fraction,
+            short_fraction,
+            flat_fraction,
+            average_abs_position,
+            max_abs_position,
+        ) = _position_occupancy(position_values)
 
     return BacktestSummary(
         sharpe=sharpe,
@@ -97,6 +117,12 @@ def summarize_pnl(
         profit_factor=float("inf") if losses == 0.0 and gains > 0.0 else _safe_profit_factor(gains, losses),
         turnover=turnover,
         average_holding_period=average_holding_period,
+        active_fraction=active_fraction,
+        long_fraction=long_fraction,
+        short_fraction=short_fraction,
+        flat_fraction=flat_fraction,
+        average_abs_position=average_abs_position,
+        max_abs_position=max_abs_position,
         annualized_volatility=float(volatility * np.sqrt(periods_per_year)),
         downside_deviation=downside_deviation,
         sortino=sortino,
@@ -233,3 +259,19 @@ def _average_holding_period(positions: np.ndarray) -> float:
     if was_active:
         holding_periods.append(current_length)
     return 0.0 if not holding_periods else float(np.mean(holding_periods))
+
+
+def _position_occupancy(positions: np.ndarray) -> tuple[float, float, float, float, float, float]:
+    active = positions != 0.0
+    long = positions > 0.0
+    short = positions < 0.0
+    abs_positions = np.abs(positions)
+    periods = positions.size
+    return (
+        float(np.count_nonzero(active) / periods),
+        float(np.count_nonzero(long) / periods),
+        float(np.count_nonzero(short) / periods),
+        float(np.count_nonzero(~active) / periods),
+        float(np.mean(abs_positions)),
+        float(np.max(abs_positions, initial=0.0)),
+    )

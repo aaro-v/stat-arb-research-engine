@@ -54,8 +54,10 @@ classification, position state, transaction-cost-aware PnL, and reporting.
 The paired `reports/generated/mean_reversion_summary.csv` file records the
 same deterministic engineering validation run with path diagnostics including
 PnL, Sharpe, drawdown, trade count, hit rate, profit factor, turnover, and
-average holding period. It also records drawdown-duration and time-under-water
-metrics so reviewers can inspect path persistence, not just return magnitude.
+average holding period. It also records active, long, short, and flat exposure
+fractions so reviewers can separate path results from position occupancy. It
+also records drawdown-duration and time-under-water metrics so reviewers can
+inspect path persistence, not just return magnitude.
 It also includes underwater fraction, average drawdown, ulcer index, and
 drawdown recovery ratio for a more complete view of drawdown persistence.
 The companion `reports/generated/mean_reversion_walk_forward.csv` file breaks
