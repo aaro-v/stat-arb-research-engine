@@ -22,6 +22,8 @@ class BacktestSummary:
     flat_fraction: float = 0.0
     average_abs_position: float = 0.0
     max_abs_position: float = 0.0
+    gross_exposure: float = 0.0
+    return_per_gross_exposure: float = 0.0
     annualized_volatility: float = 0.0
     downside_deviation: float = 0.0
     sortino: float = 0.0
@@ -93,6 +95,8 @@ def summarize_pnl(
     flat_fraction = 0.0
     average_abs_position = 0.0
     max_abs_position = 0.0
+    gross_exposure = 0.0
+    return_per_gross_exposure = 0.0
     if position_values is not None:
         position_changes = np.diff(position_values, prepend=initial_position)
         trades = int(np.count_nonzero(position_changes))
@@ -106,6 +110,8 @@ def summarize_pnl(
             average_abs_position,
             max_abs_position,
         ) = _position_occupancy(position_values)
+        gross_exposure = float(np.abs(position_values).sum())
+        return_per_gross_exposure = _return_per_gross_exposure(float(equity[-1]), gross_exposure)
 
     return BacktestSummary(
         sharpe=sharpe,
@@ -123,6 +129,8 @@ def summarize_pnl(
         flat_fraction=flat_fraction,
         average_abs_position=average_abs_position,
         max_abs_position=max_abs_position,
+        gross_exposure=gross_exposure,
+        return_per_gross_exposure=return_per_gross_exposure,
         annualized_volatility=float(volatility * np.sqrt(periods_per_year)),
         downside_deviation=downside_deviation,
         sortino=sortino,
@@ -242,6 +250,12 @@ def _drawdown_recovery_ratio(total_return: float, max_drawdown: float) -> float:
     if max_drawdown == 0.0:
         return float("inf") if total_return > 0.0 else 0.0
     return float(total_return / abs(max_drawdown))
+
+
+def _return_per_gross_exposure(total_return: float, gross_exposure: float) -> float:
+    if gross_exposure == 0.0:
+        return 0.0
+    return float(total_return / gross_exposure)
 
 
 def _average_holding_period(positions: np.ndarray) -> float:

@@ -56,6 +56,8 @@ same deterministic engineering validation run with path diagnostics including
 PnL, Sharpe, drawdown, trade count, hit rate, profit factor, turnover, and
 average holding period. It also records active, long, short, and flat exposure
 fractions so reviewers can separate path results from position occupancy. It
+also includes gross exposure and return per gross exposure so reviewers can
+normalize synthetic PnL by the amount of position deployed. It
 also records drawdown-duration and time-under-water metrics so reviewers can
 inspect path persistence, not just return magnitude.
 It also includes underwater fraction, average drawdown, ulcer index, and

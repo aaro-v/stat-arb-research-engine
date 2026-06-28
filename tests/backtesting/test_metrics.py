@@ -59,6 +59,8 @@ def test_summarize_pnl_with_position_path_diagnostics() -> None:
     assert summary.flat_fraction == pytest.approx(3 / 6)
     assert summary.average_abs_position == pytest.approx(0.5)
     assert summary.max_abs_position == pytest.approx(1.0)
+    assert summary.gross_exposure == pytest.approx(3.0)
+    assert summary.return_per_gross_exposure == pytest.approx(0.035 / 3.0)
     assert summary.hit_rate == 0.5
 
 
@@ -71,6 +73,8 @@ def test_summarize_pnl_respects_initial_position_for_turnover() -> None:
 
     assert summary.trades == 1
     assert summary.turnover == 1.0
+    assert summary.gross_exposure == pytest.approx(2.0)
+    assert summary.return_per_gross_exposure == pytest.approx(0.005 / 2.0)
 
 
 def test_summarize_pnl_validates_initial_position() -> None:
@@ -150,8 +154,11 @@ def test_summarize_walk_forward_pnl_uses_out_of_sample_windows() -> None:
     assert [fold.fold for fold in folds] == [0, 1]
     assert [fold.summary.total_return for fold in folds] == [0.05, 0.03]
     assert folds[0].summary.turnover == 1.0
+    assert folds[0].summary.gross_exposure == pytest.approx(1.0)
+    assert folds[0].summary.return_per_gross_exposure == pytest.approx(0.05)
     assert folds[1].summary.short_fraction == 0.5
     assert folds[1].summary.flat_fraction == 0.5
+    assert folds[1].summary.gross_exposure == pytest.approx(1.0)
     assert diagnostics.folds == 2
     assert diagnostics.total_return == pytest.approx(0.08)
     assert diagnostics.mean_return == pytest.approx(0.04)
@@ -220,6 +227,8 @@ def test_rolling_window_summaries_measure_decay() -> None:
     assert [window.end for window in windows] == [4, 6, 8]
     assert windows[0].summary.total_return == pytest.approx(0.07)
     assert windows[1].summary.turnover == 2.0
+    assert windows[1].summary.gross_exposure == pytest.approx(3.0)
+    assert windows[1].summary.return_per_gross_exposure == pytest.approx(-0.01 / 3.0)
     assert diagnostics.windows == 3
     assert diagnostics.window_size == 4
     assert diagnostics.recent_window_return == pytest.approx(-0.08)
