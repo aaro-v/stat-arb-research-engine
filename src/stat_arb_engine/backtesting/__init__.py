@@ -5,6 +5,7 @@ from .decay import (
     rolling_window_summaries,
 )
 from .metrics import BacktestSummary, DrawdownEpisode, drawdown_episodes, summarize_pnl
+from .regimes import RegimePnlSummary, summarize_pnl_by_regime
 from .stress import BootstrapStressSummary, block_bootstrap_stress
 from .walk_forward import (
     WalkForwardDiagnostics,
@@ -21,6 +22,7 @@ __all__ = [
     "DecayDiagnostics",
     "DrawdownEpisode",
     "RollingWindowSummary",
+    "RegimePnlSummary",
     "WalkForwardDiagnostics",
     "WalkForwardFoldSummary",
     "WalkForwardSplit",
@@ -31,5 +33,6 @@ __all__ = [
     "rolling_window_summaries",
     "rolling_splits",
     "summarize_pnl",
+    "summarize_pnl_by_regime",
     "summarize_walk_forward_pnl",
 ]

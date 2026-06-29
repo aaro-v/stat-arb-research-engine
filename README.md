@@ -80,6 +80,10 @@ early-vs-recent return and Sharpe decay checks for strategy monitoring.
 The `reports/generated/mean_reversion_drawdowns.csv` file records each
 contiguous drawdown episode, including start, trough, recovery endpoint,
 depth, duration, and recovery duration for path-level review.
+The `reports/generated/mean_reversion_regimes.csv` file groups the same
+synthetic PnL path by deterministic low/high spread-volatility regimes so
+reviewers can inspect whether validation output is concentrated in one
+market-state proxy.
 
 ## Project Layout
 

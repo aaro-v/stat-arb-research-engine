@@ -13,6 +13,7 @@ from stat_arb_engine.backtesting import (
     rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
+    summarize_pnl_by_regime,
     summarize_walk_forward_pnl,
 )
 from stat_arb_engine.execution import CostModel, estimate_position_costs
@@ -88,6 +89,8 @@ def main() -> None:
         seed=23,
     )
     drawdowns = drawdown_episodes(frame["pnl"].to_numpy())
+    volatility_regimes = classify_volatility_regime(frame["spread"].diff().fillna(0.0).to_numpy())
+    regime_summaries = summarize_pnl_by_regime(frame["pnl"].to_numpy(), volatility_regimes)
     summary_frame = pd.DataFrame(
         [
             {
@@ -255,6 +258,25 @@ def main() -> None:
             for index, episode in enumerate(drawdowns)
         ]
     ).astype({"end": "Int64", "recovery_duration": "Int64"})
+    regime_frame = pd.DataFrame(
+        [
+            {
+                "dataset": "deterministic_synthetic_engineering_validation",
+                "regime": regime.regime,
+                "observations": regime.observations,
+                "observation_fraction": regime.observation_fraction,
+                "return_share": regime.return_share,
+                "total_pnl": regime.summary.total_return,
+                "mean_pnl": regime.summary.total_return / regime.observations,
+                "sharpe": regime.summary.sharpe,
+                "max_drawdown": regime.summary.max_drawdown,
+                "hit_rate": regime.summary.hit_rate,
+                "tail_loss_95": regime.summary.tail_loss_95,
+                "expected_shortfall_95": regime.summary.expected_shortfall_95,
+            }
+            for regime in regime_summaries
+        ]
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
     summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
@@ -262,6 +284,7 @@ def main() -> None:
     rolling_frame.to_csv(output_dir / "mean_reversion_decay.csv", index=False)
     stress_frame.to_csv(output_dir / "mean_reversion_stress.csv", index=False)
     drawdown_frame.to_csv(output_dir / "mean_reversion_drawdowns.csv", index=False)
+    regime_frame.to_csv(output_dir / "mean_reversion_regimes.csv", index=False)
     plot_mean_reversion_diagnostic(
         frame,
         output_dir / "mean_reversion_diagnostic.png",
@@ -269,6 +292,12 @@ def main() -> None:
         exit_z=0.35,
     )
     print(f"Wrote sample report artifacts to {output_dir}")
+
+
+def classify_volatility_regime(spread_changes: np.ndarray) -> np.ndarray:
+    absolute_changes = np.abs(np.asarray(spread_changes, dtype=float))
+    median_change = float(np.median(absolute_changes))
+    return np.where(absolute_changes <= median_change, "low_volatility", "high_volatility")
 
 
 if __name__ == "__main__":

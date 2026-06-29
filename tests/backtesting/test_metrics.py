@@ -12,6 +12,7 @@ from stat_arb_engine.backtesting import (
     rolling_window_summaries,
     rolling_splits,
     summarize_pnl,
+    summarize_pnl_by_regime,
     summarize_walk_forward_pnl,
 )
 from stat_arb_engine.signals import ThresholdSignal, classify_zscore
@@ -42,6 +43,26 @@ def test_summarize_pnl_reports_zero_tail_risk_without_losses() -> None:
     assert summary.sortino == 0.0
     assert summary.tail_loss_95 == 0.0
     assert summary.expected_shortfall_95 == 0.0
+
+
+def test_summarize_pnl_by_regime_preserves_label_order() -> None:
+    summaries = summarize_pnl_by_regime(
+        np.array([0.01, -0.02, 0.03, -0.01]),
+        np.array(["calm", "stress", "calm", "stress"]),
+    )
+
+    assert [summary.regime for summary in summaries] == ["calm", "stress"]
+    assert summaries[0].observations == 2
+    assert summaries[0].observation_fraction == pytest.approx(0.5)
+    assert summaries[0].summary.total_return == pytest.approx(0.04)
+    assert summaries[0].return_share == pytest.approx(0.04 / 0.07)
+    assert summaries[1].summary.total_return == pytest.approx(-0.03)
+    assert summaries[1].return_share == pytest.approx(0.03 / 0.07)
+
+
+def test_summarize_pnl_by_regime_validates_shape() -> None:
+    with pytest.raises(ValueError, match="same length"):
+        summarize_pnl_by_regime(np.array([0.01, -0.01]), np.array(["calm"]))
 
 
 def test_summarize_pnl_with_position_path_diagnostics() -> None:
