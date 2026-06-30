@@ -17,6 +17,7 @@ from stat_arb_engine.backtesting import (
     summarize_walk_forward_pnl,
 )
 from stat_arb_engine.execution import CostModel, estimate_position_costs
+from stat_arb_engine.reporting import write_artifact_manifest
 from stat_arb_engine.reporting.charts import plot_mean_reversion_diagnostic
 from stat_arb_engine.signals import ThresholdPolicy, ThresholdSignal, classify_zscore
 
@@ -278,18 +279,40 @@ def main() -> None:
         ]
     )
     output_dir.mkdir(parents=True, exist_ok=True)
-    frame.to_csv(output_dir / "mean_reversion_diagnostic.csv", index=False)
-    summary_frame.to_csv(output_dir / "mean_reversion_summary.csv", index=False)
-    fold_frame.to_csv(output_dir / "mean_reversion_walk_forward.csv", index=False)
-    rolling_frame.to_csv(output_dir / "mean_reversion_decay.csv", index=False)
-    stress_frame.to_csv(output_dir / "mean_reversion_stress.csv", index=False)
-    drawdown_frame.to_csv(output_dir / "mean_reversion_drawdowns.csv", index=False)
-    regime_frame.to_csv(output_dir / "mean_reversion_regimes.csv", index=False)
+    diagnostic_path = output_dir / "mean_reversion_diagnostic.csv"
+    summary_path = output_dir / "mean_reversion_summary.csv"
+    walk_forward_path = output_dir / "mean_reversion_walk_forward.csv"
+    decay_path = output_dir / "mean_reversion_decay.csv"
+    stress_path = output_dir / "mean_reversion_stress.csv"
+    drawdown_path = output_dir / "mean_reversion_drawdowns.csv"
+    regime_path = output_dir / "mean_reversion_regimes.csv"
+    chart_path = output_dir / "mean_reversion_diagnostic.png"
+    frame.to_csv(diagnostic_path, index=False)
+    summary_frame.to_csv(summary_path, index=False)
+    fold_frame.to_csv(walk_forward_path, index=False)
+    rolling_frame.to_csv(decay_path, index=False)
+    stress_frame.to_csv(stress_path, index=False)
+    drawdown_frame.to_csv(drawdown_path, index=False)
+    regime_frame.to_csv(regime_path, index=False)
     plot_mean_reversion_diagnostic(
         frame,
-        output_dir / "mean_reversion_diagnostic.png",
+        chart_path,
         entry_z=1.6,
         exit_z=0.35,
+    )
+    write_artifact_manifest(
+        [
+            decay_path,
+            diagnostic_path,
+            chart_path,
+            drawdown_path,
+            regime_path,
+            stress_path,
+            summary_path,
+            walk_forward_path,
+        ],
+        output_dir / "manifest.csv",
+        root=Path.cwd(),
     )
     print(f"Wrote sample report artifacts to {output_dir}")
 

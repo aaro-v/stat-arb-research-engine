@@ -84,6 +84,9 @@ The `reports/generated/mean_reversion_regimes.csv` file groups the same
 synthetic PnL path by deterministic low/high spread-volatility regimes so
 reviewers can inspect whether validation output is concentrated in one
 market-state proxy.
+The `reports/generated/manifest.csv` file records byte sizes and SHA-256
+checksums for every generated sample artifact so deterministic report changes
+are easy to review.
 
 ## Project Layout
 
