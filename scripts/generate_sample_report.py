@@ -91,7 +91,11 @@ def main() -> None:
     )
     drawdowns = drawdown_episodes(frame["pnl"].to_numpy())
     volatility_regimes = classify_volatility_regime(frame["spread"].diff().fillna(0.0).to_numpy())
-    regime_summaries = summarize_pnl_by_regime(frame["pnl"].to_numpy(), volatility_regimes)
+    regime_summaries = summarize_pnl_by_regime(
+        frame["pnl"].to_numpy(),
+        volatility_regimes,
+        positions=frame["position"].to_numpy(),
+    )
     summary_frame = pd.DataFrame(
         [
             {
@@ -267,6 +271,12 @@ def main() -> None:
                 "observations": regime.observations,
                 "observation_fraction": regime.observation_fraction,
                 "return_share": regime.return_share,
+                "gross_exposure": regime.gross_exposure,
+                "exposure_share": regime.exposure_share,
+                "active_fraction": regime.active_fraction,
+                "long_fraction": regime.long_fraction,
+                "short_fraction": regime.short_fraction,
+                "flat_fraction": regime.flat_fraction,
                 "total_pnl": regime.summary.total_return,
                 "mean_pnl": regime.summary.total_return / regime.observations,
                 "sharpe": regime.summary.sharpe,

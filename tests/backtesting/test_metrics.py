@@ -60,9 +60,37 @@ def test_summarize_pnl_by_regime_preserves_label_order() -> None:
     assert summaries[1].return_share == pytest.approx(0.03 / 0.07)
 
 
+def test_summarize_pnl_by_regime_reports_position_concentration() -> None:
+    summaries = summarize_pnl_by_regime(
+        np.array([0.01, -0.02, 0.03, -0.01]),
+        np.array(["calm", "stress", "calm", "stress"]),
+        positions=np.array([0.0, 1.0, -2.0, 0.0]),
+    )
+
+    assert summaries[0].gross_exposure == pytest.approx(2.0)
+    assert summaries[0].exposure_share == pytest.approx(2 / 3)
+    assert summaries[0].active_fraction == pytest.approx(0.5)
+    assert summaries[0].long_fraction == pytest.approx(0.0)
+    assert summaries[0].short_fraction == pytest.approx(0.5)
+    assert summaries[0].flat_fraction == pytest.approx(0.5)
+    assert summaries[1].gross_exposure == pytest.approx(1.0)
+    assert summaries[1].exposure_share == pytest.approx(1 / 3)
+    assert summaries[1].active_fraction == pytest.approx(0.5)
+    assert summaries[1].long_fraction == pytest.approx(0.5)
+    assert summaries[1].short_fraction == pytest.approx(0.0)
+    assert summaries[1].flat_fraction == pytest.approx(0.5)
+
+
 def test_summarize_pnl_by_regime_validates_shape() -> None:
     with pytest.raises(ValueError, match="same length"):
         summarize_pnl_by_regime(np.array([0.01, -0.01]), np.array(["calm"]))
+
+    with pytest.raises(ValueError, match="same length"):
+        summarize_pnl_by_regime(
+            np.array([0.01, -0.01]),
+            np.array(["calm", "stress"]),
+            positions=np.array([1.0]),
+        )
 
 
 def test_summarize_pnl_with_position_path_diagnostics() -> None:
